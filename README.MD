@@ -1,1 +1,1 @@
-Требуется запустить frontend(npm start) и backend
+Требуется запустить frontend https://github.com/M1xooon/diplom_frontend(npm start) и backend
