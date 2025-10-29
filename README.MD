@@ -1,0 +1,1 @@
+Требуется запустить frontend(npm start) и backend
