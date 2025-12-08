@@ -4,22 +4,16 @@ from rest_framework.views import APIView
 from .models import User
 from .serializers import UserSerializer, RegisterSerializer
 from django.contrib.auth import authenticate, login, logout
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
-# -------------------------------
-# Регистрация
-# -------------------------------
-@method_decorator(csrf_exempt, name='dispatch')
+# Registration — allow any
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
 
-# -------------------------------
-# Логин
-# -------------------------------
-@method_decorator(csrf_exempt, name='dispatch')
+
+# Login — uses Django session (creates sessionid cookie)
 class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -28,51 +22,47 @@ class LoginView(APIView):
         password = request.data.get('password')
         user = authenticate(username=username, password=password)
         if user:
-            # отключаем сессию, поэтому login не нужен
-            return Response({
-                "id": user.id,
-                "username": user.username,
-                "full_name": user.full_name,
-                "email": user.email,
-                "is_admin": user.is_admin
-            })
+            login(request, user)  # create session cookie
+            serializer = UserSerializer(user)
+            return Response(serializer.data)
         return Response({"error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
 
-# -------------------------------
-# Логаут
-# -------------------------------
-@method_decorator(csrf_exempt, name='dispatch')
+
+# Logout — clears session
 class LogoutView(APIView):
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        # сессии нет, logout ничего не делает
+        logout(request)
         return Response({"message": "Logged out"})
 
-# -------------------------------
-# Список пользователей (только админ)
-# -------------------------------
-@method_decorator(csrf_exempt, name='dispatch')
+
+# Auth check — returns current user if authenticated
+class AuthCheckView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data)
+
+
+# Users list — admin only
 class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [IsAdminUser]
 
-# -------------------------------
-# Удаление пользователя
-# -------------------------------
-@method_decorator(csrf_exempt, name='dispatch')
+
+# Delete user — admin only
 class UserDeleteView(generics.DestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [IsAdminUser]
 
-# -------------------------------
-# Изменение признака администратора
-# -------------------------------
-@method_decorator(csrf_exempt, name='dispatch')
+
+# Update admin flag — admin only
 class UserUpdateAdminView(APIView):
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [IsAdminUser]
 
     def patch(self, request, pk):
         try:
