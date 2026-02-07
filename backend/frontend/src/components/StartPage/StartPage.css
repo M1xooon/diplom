@@ -1,0 +1,58 @@
+.start-page {
+  display: flex;
+  justify-content: space-between;
+  width: 70%;
+  margin: 70px auto;
+  font-family: 'Source Sans Pro', sans-serif;
+}
+
+.start-page--welcome {
+  width: 40%;
+}
+
+.start-page--welcome--title {
+  font-weight: 900;
+  font-size: 3em;
+  color: #1b263b
+}
+
+.start-page--image {
+  width: 40%;
+}
+
+.start-page--welcome--subtitle {
+  font-size: 2em;
+  font-weight: 600;
+  color: #1b263b
+}
+
+.start-page--welcome--content {
+  font-size: 1.5em;
+  font-weight: 400;
+  margin-bottom: 50px;
+  color: #1b263b
+}
+
+.sing-up-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 160px;
+  height: 55px;
+  background-color: #415a77;
+  font-weight: 600;
+  font-size: 1.4em;
+  color: #ffffff;
+  cursor: pointer;
+  border: none;
+  border-radius: 10px;
+}
+
+.sing-up-button:hover {
+  background-color: #415a77;
+  transition: all 500ms;
+}
+
+.start-page--image {
+  cursor: default;
+}

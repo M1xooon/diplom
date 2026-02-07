@@ -1,17 +1,17 @@
 from django.db import models
-from django.conf import settings
-import uuid
-import os
+from django.core.files.storage import FileSystemStorage
+from users.models import User
 
-def user_directory_path(instance, filename):
-    return f'user_files/{instance.user.username}/{uuid.uuid4().hex}_{filename}'
+file_system = FileSystemStorage(location='storage')
 
-class File(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='files')
-    original_name = models.CharField(max_length=255)
-    file = models.FileField(upload_to=user_directory_path)
-    size = models.BigIntegerField()
-    uploaded_at = models.DateTimeField(auto_now_add=True)
-    last_downloaded = models.DateTimeField(null=True, blank=True)
-    comment = models.CharField(max_length=255, blank=True)
-    share_link = models.UUIDField(default=uuid.uuid4, unique=True)
+class FileModel(models.Model):
+    id = models.AutoField(primary_key=True, unique=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    storage_file_name = models.CharField(unique=True, max_length=50)
+    native_file_name = models.CharField(max_length=50)
+    size = models.IntegerField(null=True)
+    upload_date = models.DateField(auto_now_add=True, null=True)
+    last_download_date = models.DateField(null=True)
+    comment = models.TextField(max_length=100, null=True, blank=True)
+    public_download_id = models.CharField(unique=True, max_length=50)
+    file = models.FileField(storage=file_system, blank=True)

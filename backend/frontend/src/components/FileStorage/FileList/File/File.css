@@ -1,0 +1,47 @@
+.file {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 80px;
+  margin: 10px;
+}
+
+.file-name {
+  font-size: 0.8em;
+  line-break: auto;
+  word-break: break-all;
+}
+
+.file-description {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  width:max-content;
+  max-width: 200px;
+  top: -50px;
+  right: 10px;
+  padding: 10px;
+  translate: 100%;
+  border: 1px solid #e0e1dd;
+  background-color: #ffffff;
+  border-radius: 10px;
+  font-size: 0.8em;
+  z-index: 1;
+}
+
+.file-description--item {
+  display: flex;
+  justify-content: space-between;
+}
+
+.file-description--item--name {
+  font-weight: bold;
+}
+
+.file-description--item--content {
+  margin-left: 10px;
+}
+
+.current {
+  font-weight: bold;
+}

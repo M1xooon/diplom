@@ -1,0 +1,15 @@
+.page404 {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  width: 50%;
+  margin: 100px auto;
+}
+
+.page404-title {
+  font-size: 10em;
+}
+
+.page404-content {
+  font-size: 2em;
+}

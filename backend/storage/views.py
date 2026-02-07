@@ -1,73 +1,184 @@
-from rest_framework import generics, permissions, status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from .models import File
-from .serializers import FileSerializer
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from django.http import FileResponse, Http404
-from django.utils import timezone
+from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
+from django.http import FileResponse
+from datetime import date
+from rest_framework.views import APIView
+from storage.models import FileModel, file_system
+from storage.serializers import FileSerializer
 
-# List files for current user; admin can pass ?user_id= to view other user's files
-class FileListView(generics.ListAPIView):
-    serializer_class = FileSerializer
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_link(request):
+    user_id = request.user.id
+    file_id = request.query_params['file_id']
+
+    if request.user.is_staff:
+        file = FileModel.objects.filter(id=file_id).first()
+    else:
+        file = FileModel.objects.filter(user_id=user_id).filter(id=file_id).first()
+
+    if file:
+        data = {
+            'link': file.public_download_id,
+        }
+
+        return Response(data, status=status.HTTP_200_OK)
+
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['GET'])
+def get_file(request, link):
+    file = FileModel.objects.filter(public_download_id=link).first()
+
+    if file:
+        file.last_download_date = date.today()
+        file.save()
+
+        return FileResponse(file.file, status.HTTP_200_OK, as_attachment=True, filename=file.native_file_name)
+
+    return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+class FileView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        user = self.request.user
-        # admin may supply ?user_id=<id>
-        if user.is_admin and 'user_id' in self.request.query_params:
-            try:
-                uid = int(self.request.query_params['user_id'])
-                return File.objects.filter(user_id=uid)
-            except (ValueError, TypeError):
-                return File.objects.none()
-        return File.objects.filter(user=user)
+    def get_queryset(self, user_id=None):
 
+        if self.request.user.is_staff and user_id:
+            return FileModel.objects.filter(user=user_id).all()
 
-class FileUploadView(generics.CreateAPIView):
-    serializer_class = FileSerializer
-    permission_classes = [IsAuthenticated]
+        return FileModel.objects.filter(user=self.request.user.id).all()
 
-    def perform_create(self, serializer):
-        uploaded_file = self.request.FILES.get('file')
-        if not uploaded_file:
-            raise serializers.ValidationError({"file": "No file provided"})
-        # save under current user
-        serializer.save(
-            user=self.request.user,
-            size=uploaded_file.size,
-            original_name=uploaded_file.name
-        )
+    def get(self, request):
 
+        if 'id' not in request.query_params:
+            user_id = None
 
-class FileDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = File.objects.all()
-    serializer_class = FileSerializer
-    permission_classes = [IsAuthenticated]
+            if 'user_id' in request.query_params:
+                user_id = request.query_params['user_id']
 
-    def get_object(self):
-        obj = super().get_object()
-        # if not admin and trying to access other user's file -> forbid
-        if not self.request.user.is_admin and obj.user != self.request.user:
-            from rest_framework.exceptions import PermissionDenied
-            raise PermissionDenied("You do not have access to this file")
-        return obj
+            files = self.get_queryset(user_id).values('id', 'user__username', 'size', 'native_file_name', 'upload_date',
+                                                      'last_download_date', 'comment')
+            return Response(files)
 
-    def patch(self, request, *args, **kwargs):
-        # allow renaming (update original_name or comment)
-        return self.partial_update(request, *args, **kwargs)
+        file = self.get_queryset().filter(id=request.query_params['id']).first()
 
+        if file:
+            file.last_download_date = date.today()
+            file.save()
+            return FileResponse(file.file, status.HTTP_200_OK, as_attachment=True)
 
-# Download file via id (protected)
-def download_file_view(request, pk):
-    try:
-        file_obj = File.objects.get(pk=pk)
-    except File.DoesNotExist:
-        raise Http404
-    # permission: only owner or admin
-    if not request.user.is_authenticated or (not request.user.is_admin and file_obj.user != request.user):
-        from django.http import HttpResponseForbidden
-        return HttpResponseForbidden()
-    try:
-        return FileResponse(open(file_obj.path, 'rb'), as_attachment=True, filename=file_obj.original_name)
-    except Exception:
-        raise Http404
+        data = {
+            'message': 'The file not found',
+        }
+
+        return Response(data, status=status.HTTP_404_NOT_FOUND)
+
+    def post(self, request):
+        serializer = FileSerializer(data=request.data)
+
+        data = {}
+
+        if serializer.is_valid():
+            serializer.create(user_id=request.user.id, file=request.FILES['file'])
+
+            data = self.get_queryset().values('id', 'user__username', 'size', 'native_file_name', 'upload_date',
+                                              'last_download_date', 'comment')
+
+            return Response(data, status=status.HTTP_200_OK)
+
+        data = serializer.errors
+
+        return Response(data)
+
+    def patch(self, request):
+        serializer = FileSerializer(data=request.data)
+
+        data = {}
+
+        if serializer.is_valid():
+            user = request.user
+
+            serializer.patch(
+                user=user,
+            )
+
+            if 'user_storage_id' in request.query_params and user.is_staff:
+                data = self.get_queryset(
+                    user_id=request.query_params['user_storage_id']
+                ).values(
+                    'id',
+                    'user__username',
+                    'size',
+                    'native_file_name',
+                    'upload_date',
+                    'last_download_date',
+                    'comment',
+                )
+            else:
+                data = self.get_queryset().values(
+                    'id',
+                    'user__username',
+                    'size',
+                    'native_file_name',
+                    'upload_date',
+                    'last_download_date',
+                    'comment'
+                )
+
+            return Response(data)
+
+        data = serializer.errors
+
+        return Response(data)
+
+    def delete(self, request):
+        if request.user.is_staff:
+            deleted_file = FileModel.objects.filter(
+                id=int(request.query_params['id'])
+            ).first()
+        else:
+            deleted_file = FileModel.objects.filter(
+                user_id=request.user.id
+            ).all().filter(
+                id=int(request.query_params['id'])
+            ).first()
+
+        if deleted_file:
+            file_system.delete(deleted_file.storage_file_name)
+
+            deleted_file.delete()
+
+            user = request.user
+
+            if 'user_storage_id' in request.query_params and user.is_staff:
+                data = self.get_queryset(
+                    user_id=request.query_params['user_storage_id']
+                ).values(
+                    'id',
+                    'user__username',
+                    'size', 'native_file_name',
+                    'upload_date', 'last_download_date',
+                    'comment',
+                )
+            else:
+                data = self.get_queryset().values(
+                    'id',
+                    'user__username',
+                    'size', 'native_file_name',
+                    'upload_date',
+                    'last_download_date',
+                    'comment',
+                )
+
+            return Response(data, status.HTTP_200_OK)
+
+        data = {
+            'message': 'The file not found',
+        }
+
+        return Response(data, status.HTTP_404_NOT_FOUND)

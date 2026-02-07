@@ -1,77 +1,120 @@
-from rest_framework import generics, permissions, status
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from .models import User
-from .serializers import UserSerializer, RegisterSerializer
+import json
 from django.contrib.auth import authenticate, login, logout
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from django.http import JsonResponse
+from django.db.models import Sum, Count
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.http import require_POST
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.generics import CreateAPIView
+from rest_framework.permissions import AllowAny, IsAdminUser
+from rest_framework.decorators import  permission_classes
+from rest_framework.decorators import api_view
 
-# Registration — allow any
-class RegisterView(generics.CreateAPIView):
+from users.models import User
+from users.serializers import RegistrUserSerializer
+
+
+class RegistrUserView(CreateAPIView):
     queryset = User.objects.all()
-    serializer_class = RegisterSerializer
-    permission_classes = [permissions.AllowAny]
 
+    serializer_class = RegistrUserSerializer
 
-# Login — uses Django session (creates sessionid cookie)
-class LoginView(APIView):
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny]
 
     def post(self, request):
-        username = request.data.get('username')
-        password = request.data.get('password')
-        user = authenticate(username=username, password=password)
-        if user:
-            login(request, user)  # create session cookie
-            serializer = UserSerializer(user)
-            return Response(serializer.data)
-        return Response({"error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = RegistrUserSerializer(data=request.data)
+
+        data = {}
+
+        if serializer.is_valid():
+            serializer.save()
+
+            data['response'] = True
+
+            return Response(data, status=status.HTTP_200_OK)
+
+        else:
+            data = serializer.errors
+
+            return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
 
-# Logout — clears session
-class LogoutView(APIView):
-    permission_classes = [IsAuthenticated]
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def get_detail_user_list(request):
+    result = User.objects.annotate(size=Sum('filemodel__size'), count=Count('filemodel__id')).values(
+        'id', 'username', 'first_name', 'last_name', 'email', 'count', 'size', 'is_staff')
 
-    def post(self, request):
-        logout(request)
-        return Response({"message": "Logged out"})
+    if result:
+        return Response(result, status=status.HTTP_200_OK)
 
-
-# Auth check — returns current user if authenticated
-class AuthCheckView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        serializer = UserSerializer(request.user)
-        return Response(serializer.data)
+    return Response(status=status.HTTP_404_NOT_FOUND)
 
 
-# Users list — admin only
-class UserListView(generics.ListAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [IsAdminUser]
+@api_view(['DELETE'])
+@permission_classes([IsAdminUser])
+def delete_user(request, user_id):
+    user = User.objects.get(id=user_id)
+
+    if user:
+        user.delete()
+
+        return JsonResponse({
+            "message": "success",
+        })
+
+    return JsonResponse({
+        "message": 'User not found',
+    }, status=404)
 
 
-# Delete user — admin only
-class UserDeleteView(generics.DestroyAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [IsAdminUser]
+@ensure_csrf_cookie
+def get_csrf_token(request):
+    return JsonResponse({
+        "message": "csrf cookie set"
+    })
 
 
-# Update admin flag — admin only
-class UserUpdateAdminView(APIView):
-    permission_classes = [IsAdminUser]
+@require_POST
+def login_view(request):
+    data = json.loads(request.body)
+    email = data.get('email')
+    password = data.get('password')
 
-    def patch(self, request, pk):
-        try:
-            user = User.objects.get(pk=pk)
-        except User.DoesNotExist:
-            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-        is_admin = request.data.get('is_admin')
-        if isinstance(is_admin, bool):
-            user.is_admin = is_admin
-            user.save()
-            return Response({"message": "Admin status updated"})
-        return Response({"error": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
+    if email is None or password is None:
+        return JsonResponse({
+            "message": "Please enter both email and password"
+        }, status=400)
+
+    user = authenticate(email=email, password=password)
+
+    if user is not None:
+        login(request, user)
+
+        return JsonResponse({
+            "message": "success",
+        })
+
+    return JsonResponse(
+        {
+            "message": "invalid credentials"
+        }, status=400
+    )
+
+@require_POST
+def logout_view(request):
+    logout(request)
+
+    return JsonResponse({
+        "message": 'logout',
+    })
+
+
+def me_view(request):
+    data = request.user
+
+    return JsonResponse({
+        "username": data.username,
+        "isAdmin": data.is_staff,
+    })
