@@ -1,68 +1,41 @@
-import React, { useContext, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import '../../formStyle/Form.css';
-import img from '../../formStyle/icons8-close.svg';
-import { patchFile } from '../../../api/requests';
-import state from '../../../GlobalState/state';
+import { useSelector, useDispatch } from 'react-redux';
+import { updateFile } from '../../../redux/slices/filesSlice';
 
-function FileRenameForm({ currentFile, setForm, setFiles }) {
-  const newFileName = useRef();
-  const { currentStorageUser } = useContext(state);
+export default function FileRenameForm({ fileId, currentName }) {
+  const dispatch = useDispatch();
+  const { currentStorageUser } = useSelector((state) => state.auth);
+  const [newName, setNewName] = useState(currentName || '');
 
-  useEffect(() => {
-    newFileName.current.value = currentFile.native_file_name;
-  }, []);
-
-  const onSubmitHandler = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const patchData = currentFile;
-    patchData.native_file_name = newFileName.current.value;
-
-    let response;
-
-    if (currentStorageUser) {
-      response = await patchFile(patchData, currentStorageUser);
-    } else {
-      response = await patchFile(patchData);
+    if (!newName.trim()) {
+      alert('Filename cannot be empty');
+      return;
     }
 
-    const data = await response.json();
-
-    if (response.ok) {
-      setFiles(data);
-      setForm();
-    }
-  };
-
-  const onCloseHandler = () => {
-    setForm();
+    await dispatch(updateFile({
+      fileData: { id: fileId, native_file_name: newName },
+      userStorageId: currentStorageUser
+    }));
   };
 
   return (
-    <form className="form" onSubmit={onSubmitHandler}>
-      <h2 className="form-title">Rename file</h2>
-      <input type="text" placeholder="new name" ref={newFileName} />
-      <input type="submit" value="OK" required />
-      <button
-        className="close"
-        onClick={onCloseHandler}
-        type="button"
-        aria-label="Close"
-      >
-        <img
-          src={img}
-          alt="close"
-        />
-      </button>
+    <form onSubmit={handleSubmit}>
+      <input
+        type="text"
+        value={newName}
+        onChange={(e) => setNewName(e.target.value)}
+        placeholder="Enter new filename"
+      />
+      <button type="submit">Rename</button>
     </form>
   );
 }
 
 FileRenameForm.propTypes = {
-  currentFile: PropTypes.instanceOf(Object).isRequired,
-  setForm: PropTypes.func.isRequired,
-  setFiles: PropTypes.func.isRequired,
+  fileId: PropTypes.number.isRequired,
+  currentName: PropTypes.string,
 };
-
-export default FileRenameForm;

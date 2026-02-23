@@ -1,58 +1,12 @@
-import React, { useContext } from 'react';
-import { Link } from 'react-router-dom';
-import Username from './Username';
-import Context from '../../GlobalState/state';
-import './Header.css';
-import UserStorage from './UserStorage';
+import { useSelector } from 'react-redux';
 
-function Header() {
-  const { sessionId, username, currentStorageUser } = useContext(Context);
+export default function Header() {
+  const { username, isAdmin } = useSelector((state) => state.auth);
 
   return (
-    <section className="header">
-      <div
-        className="header--logo"
-      >
-        <Link
-          to="/"
-        >
-          bookingCloud
-        </Link>
-      </div>
-      { currentStorageUser
-        ? <UserStorage storageUserId={currentStorageUser} />
-        : null }
-      <div className="header--menu-container">
-        {
-        !sessionId
-          ? (
-            <>
-              <div
-                className="header--menu-container--item"
-              >
-                <Link
-                  to="/sign-in"
-                >
-                  Sign in
-                </Link>
-              </div>
-              <div
-                className="header--menu-container--item"
-              >
-                <Link
-                  to="/sign-up"
-                >
-                  Sign up
-                </Link>
-              </div>
-            </>
-          )
-          : <Username username={username} />
-      }
-
-      </div>
-    </section>
+    <div>
+      <p>User: {username}</p>
+      {isAdmin && <p>Admin</p>}
+    </div>
   );
 }
-
-export default Header;

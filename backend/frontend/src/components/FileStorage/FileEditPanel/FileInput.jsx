@@ -1,53 +1,48 @@
-import PropTypes from 'prop-types';
-import React, { useRef, useState, useContext } from 'react';
-import Context from '../../../GlobalState/state';
+import React, { useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { uploadFile } from '../../../redux/slices/filesSlice';
 import './FileInput.css';
 
-function FileInput({ sendFile }) {
-  const file = useRef();
-  const [fileChosen, setFileChosen] = useState();
-  const { currentStorageUser } = useContext(Context);
+export default function FileInput() {
+  const dispatch = useDispatch();
+  const { currentStorageUser } = useSelector((state) => state.auth);
+  const [file, setFile] = useState(null);
+  const [comment, setComment] = useState('');
 
-  const onChangeHandler = () => {
-    setFileChosen(file.current.files);
-  };
-
-  const onSubmitHandler = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    sendFile(fileChosen.item(0));
-    setFileChosen();
-    file.current.value = '';
+
+    if (!file) {
+      alert('Please select a file');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('comment', comment);
+
+    await dispatch(uploadFile(formData));
+
+    // Очистить форму
+    setFile(null);
+    setComment('');
+    e.target.reset();
   };
 
   return (
-    !currentStorageUser
-      ? (
-        <form className="file-input-form" onSubmit={onSubmitHandler}>
-          <div className="input-wrapper button">
-            <label htmlFor="input_file">
-              Add file
-              <input
-                type="file"
-                id="input_file"
-                ref={file}
-                onChange={onChangeHandler}
-              />
-            </label>
-            { fileChosen && fileChosen.length
-              ? <span className="preview">{ fileChosen.item(0).name }</span>
-              : null }
-          </div>
-          { fileChosen && fileChosen.length
-            ? <input type="submit" value="send" />
-            : null }
-        </form>
-      )
-      : null
+    <form onSubmit={handleSubmit} className="file-input-form">
+      <input
+        type="file"
+        onChange={(e) => setFile(e.target.files[0])}
+        required
+      />
+      <input
+        type="text"
+        placeholder="Comment (optional)"
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+      />
+      <button type="submit">Upload</button>
+    </form>
   );
 }
-
-FileInput.propTypes = {
-  sendFile: PropTypes.func.isRequired,
-};
-
-export default FileInput;

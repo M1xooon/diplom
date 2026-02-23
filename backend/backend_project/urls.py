@@ -1,8 +1,7 @@
 from django.urls import path, include
-
-from storage.views import FileView, get_link, get_file
+from storage.views import FileView, get_link, get_file, rename_file
 from users.views import login_view, logout_view, get_csrf_token, me_view, get_detail_user_list, delete_user, \
-    RegistrUserView
+    RegistrUserView, toggle_admin_status
 
 urlpatterns = [
     path('api/auth/login/', login_view),
@@ -14,6 +13,8 @@ urlpatterns = [
     path('api/registr/', RegistrUserView.as_view()),
     path('api/files/', FileView.as_view()),
     path('api/link/', get_link),
+    path('api/users/<int:user_id>/toggle-admin/', toggle_admin_status, name='toggle-admin'),
+    path('api/files/rename/', rename_file, name='rename-file'),
     path('api/link/<str:link>/', get_file),
     path('', include('frontend.urls')),
 ]

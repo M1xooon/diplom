@@ -4,9 +4,16 @@ from users.models import User
 
 file_system = FileSystemStorage(location='storage')
 
+
 class FileModel(models.Model):
     id = models.AutoField(primary_key=True, unique=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='files'
+    )
+
     storage_file_name = models.CharField(unique=True, max_length=50)
     native_file_name = models.CharField(max_length=50)
     size = models.IntegerField(null=True)
@@ -15,3 +22,9 @@ class FileModel(models.Model):
     comment = models.TextField(max_length=100, null=True, blank=True)
     public_download_id = models.CharField(unique=True, max_length=50)
     file = models.FileField(storage=file_system, blank=True)
+
+    class Meta:
+        ordering = ['-upload_date']
+
+    def __str__(self):
+        return f"{self.native_file_name} - {self.user.username}"

@@ -1,80 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchFiles } from '../../../redux/slices/filesSlice';
 import File from './File/File';
 import './FileList.css';
 
-function FileList({ fileList, currentFile, setCurrentFile }) {
-  const [users, setUsers] = useState();
+export default function FileList() {
+  const dispatch = useDispatch();
+  const { files, loading } = useSelector((state) => state.files);
 
   useEffect(() => {
-    const userList = [];
+    dispatch(fetchFiles());
+  }, [dispatch]);
 
-    fileList.forEach((element) => {
-      userList.push(element.user__username);
-    });
-
-    const set = new Set(userList);
-    const uniqUserList = Array.from(set);
-
-    setUsers(uniqUserList);
-  }, [fileList]);
+  if (loading) return <div>Loading...</div>;
 
   return (
-    users && users.length > 1
-      ? users.map((user) => (
-        <div key={user}>
-          <h3 className="file-list-title">{user}</h3>
-          <div className="file-list-container">
-            {fileList.map(
-              (file) => (file.user__username === user
-                ? (
-                  <File
-                    key={file.id}
-                    id={file.id}
-                    name={file.native_file_name}
-                    comment={file.comment}
-                    size={file.size}
-                    upload={file.upload_date}
-                    download={file.last_download_date}
-                    currentFile={currentFile}
-                    setCurrentFile={setCurrentFile}
-                  />
-                )
-                : null),
-            ) }
-          </div>
-        </div>
-      ))
-      : (
-        <div className="file-list-container">
-          { fileList.map(
-            (file) => (
-              <File
-                key={file.id}
-                id={file.id}
-                name={file.native_file_name}
-                comment={file.comment}
-                size={file.size}
-                upload={file.upload_date}
-                download={file.last_download_date}
-                currentFile={currentFile}
-                setCurrentFile={setCurrentFile}
-              />
-            ),
-          )}
-        </div>
-      )
+    <div className="file-list">
+      {files.map((file) => (
+        <File key={file.id} file={file} />
+      ))}
+    </div>
   );
 }
-
-FileList.propTypes = {
-  fileList: PropTypes.instanceOf(Array).isRequired,
-  currentFile: PropTypes.instanceOf(Object),
-  setCurrentFile: PropTypes.func.isRequired,
-};
-
-FileList.defaultProps = {
-  currentFile: undefined,
-};
-
-export default FileList;

@@ -1,41 +1,24 @@
-import React, { useContext, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import Context from '../../GlobalState/state';
+import React from 'react';
+import { useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
 import './StartPage.css';
-import img from './StartPage.svg';
+import logo from './StartPage.svg';
 
-function StartPage() {
-  const navigate = useNavigate();
-  const { sessionId } = useContext(Context);
-
-  const onClickHandler = () => {
-    navigate('/sign-up/');
-  };
-
-  useEffect(() => {
-    if (sessionId) {
-      navigate('/my-storage/');
-    }
-  }, [sessionId]);
+export default function StartPage() {
+  const { username } = useSelector((state) => state.auth);
 
   return (
-    !sessionId
-      ? (
-        <section className="start-page">
-          <div className="start-page--welcome">
-            <h1 className="start-page--welcome--title">Загружайте, скачивайте и управляйте своими файлами.</h1>
-            <h2 className="start-page--welcome--subtitle">Попробуйте новое хранилище файлов.</h2>
-            <div className="start-page--welcome--content">
-            bookingCloud - это новое простое хранилище файлов.
-            Здесь вы можете хранить и управлять своими файлами. Попробуйте прямо сейчас!
-            </div>
-            <button className="sing-up-button" onClick={onClickHandler} type="button">Начать</button>
-          </div>
-          <img className="start-page--image" src={img} alt="StartPage" />
-        </section>
-      )
-      : null
+    <div className="start-page">
+      <img src={logo} alt="Cloud Storage" className="logo" />
+      <h1>Welcome to Cloud Storage</h1>
+      {username ? (
+        <Link to="/storage">Go to Storage</Link>
+      ) : (
+        <div>
+          <Link to="/signin">Sign In</Link>
+          <Link to="/signup">Sign Up</Link>
+        </div>
+      )}
+    </div>
   );
 }
-
-export default StartPage;

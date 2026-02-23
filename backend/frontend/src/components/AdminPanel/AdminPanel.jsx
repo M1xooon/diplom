@@ -1,20 +1,20 @@
-import React, { useContext } from 'react';
-import UsersList from './UsersList';
-import './AdminPanel.css';
-import Context from '../../GlobalState/state';
+import { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchUsers } from '../../redux/slices/adminSlice';
 
-function AdminPanel() {
-  const { isAdmin } = useContext(Context);
+export default function AdminPanel() {
+  const dispatch = useDispatch();
+  const { isAdmin } = useSelector((state) => state.auth);
+  const { users, loading } = useSelector((state) => state.admin);
 
-  if (!isAdmin) {
-    return (
-      <div className="admin-panel--access-denied">
-        <span className="content">You do not have access to the administration panel :(</span>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (isAdmin) {
+      dispatch(fetchUsers());
+    }
+  }, [dispatch, isAdmin]);
 
-  return <UsersList />;
+  if (!isAdmin) return <div>Access denied</div>;
+  if (loading) return <div>Loading...</div>;
+
+  return <div>...</div>;
 }
-
-export default AdminPanel;

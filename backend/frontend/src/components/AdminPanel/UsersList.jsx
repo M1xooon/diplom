@@ -1,78 +1,92 @@
-import React, { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
-import IsStaffBtn from './IsStaffButton';
-import ToStorageBtn from './ToStorageBtn';
-import { deleteUser, patchUser } from '../../api/requests';
-import img from '../formStyle/icons8-close.svg';
-import './AdminPanel.css';
+import React, { useState, useEffect } from 'react';
+import User from './User';
+import { getDetailUserList } from '../../api/requests';
+import '../Preloader/Preloader.css';
 
-function User({
-  id, username, firstName, lastName, email, numOfFiles, size, isStaff, removeItem,
-}) {
-  const [sendRequest, setSendRequest] = useState('');
-  const [_isStaff, _setIsStaff] = useState(isStaff);
+export default function UsersList() {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    const fetchDataDelete = async () => {
-      const response = await deleteUser(id);
+    fetchUsers();
+  }, []);
 
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const response = await getDetailUserList();
       if (response.ok) {
-        removeItem(id);
+        const data = await response.json();
+        setUsers(data);
       }
-    };
-
-    const fetchDataPatch = async () => {
-      await patchUser(id, _isStaff);
-    };
-
-    if (sendRequest === 'DELETE') {
-      fetchDataDelete();
-      setSendRequest('');
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setLoading(false);
     }
-
-    if (sendRequest === 'PATCH') {
-      fetchDataPatch();
-      setSendRequest('');
-    }
-  }, [sendRequest]);
-
-  const onClickHandler = (method) => {
-    setSendRequest(method);
   };
 
+  const handleUserDeleted = (userId) => {
+    setUsers((prevUsers) => prevUsers.filter((user) => user.id !== userId));
+  };
+
+  const handleAdminToggled = (userId, newAdminStatus) => {
+    setUsers((prevUsers) =>
+      prevUsers.map((user) =>
+        user.id === userId ? { ...user, is_staff: newAdminStatus } : user
+      )
+    );
+  };
+
+  const filteredUsers = users.filter((user) =>
+    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  if (loading) {
+    return <div className="preloader">Loading users...</div>;
+  }
+
   return (
-    <tr key={id}>
-      <td>{ username }</td>
-      <td>{ firstName }</td>
-      <td>{ lastName }</td>
-      <td>{ email }</td>
-      <td>{ numOfFiles }</td>
-      <td>{ size }</td>
-      <td>
-        <IsStaffBtn isStaff={_isStaff} setIsStaff={_setIsStaff} onClickHandler={onClickHandler} />
-      </td>
-      <td>
-        <ToStorageBtn userId={id} />
-      </td>
-      <td>
-        <button onClick={() => onClickHandler('DELETE')} onKeyDown={() => onClickHandler('DELETE')} type="button" aria-label="Delete">
-          <img src={img} alt="delete" />
-        </button>
-      </td>
-    </tr>
+    <div className="users-list-container">
+      <div className="search-section">
+        <input
+          type="text"
+          placeholder="Search by username or email..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="search-input"
+        />
+      </div>
+
+      <table className="users-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Files</th>
+            <th>Storage Size</th>
+            <th>Admin</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filteredUsers.map((user) => (
+            <User
+              key={user.id}
+              user={user}
+              onUserDeleted={handleUserDeleted}
+              onAdminToggled={handleAdminToggled}
+            />
+          ))}
+        </tbody>
+      </table>
+
+      {filteredUsers.length === 0 && (
+        <div className="no-users">No users found</div>
+      )}
+    </div>
   );
 }
-
-User.propTypes = {
-  id: PropTypes.number.isRequired,
-  username: PropTypes.string.isRequired,
-  firstName: PropTypes.string.isRequired,
-  lastName: PropTypes.string.isRequired,
-  email: PropTypes.string.isRequired,
-  numOfFiles: PropTypes.number.isRequired,
-  size: PropTypes.string.isRequired,
-  isStaff: PropTypes.bool.isRequired,
-  removeItem: PropTypes.func.isRequired,
-};
-
-export default User;

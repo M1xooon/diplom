@@ -182,3 +182,47 @@ class FileView(APIView):
         }
 
         return Response(data, status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def rename_file(request):
+    """
+    Переименование файла.
+    """
+    file_id = request.data.get('id')
+    new_filename = request.data.get('native_file_name', '').strip()
+
+    if not file_id:
+        return Response(
+            {'error': 'File ID is required'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if not new_filename:
+        return Response(
+            {'error': 'New filename cannot be empty'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        # Проверяем права доступа
+        if request.user.is_staff:
+            file = FileModel.objects.get(id=file_id)
+        else:
+            file = FileModel.objects.get(id=file_id, user=request.user)
+
+        # Переименовываем
+        file.native_file_name = new_filename
+        file.save()
+
+        return Response({
+            'message': 'File renamed successfully',
+            'native_file_name': new_filename
+        })
+
+    except FileModel.DoesNotExist:
+        return Response(
+            {'error': 'File not found'},
+            status=status.HTTP_404_NOT_FOUND
+        )

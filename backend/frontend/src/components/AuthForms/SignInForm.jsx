@@ -1,69 +1,61 @@
-import React, {
-  useContext, useEffect, useRef, useState,
-} from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import Cookies from 'js-cookie';
-import Preloader from '../Preloader/Preloader';
-import { logIn } from '../../api/requests';
-import Context from '../../GlobalState/state';
-import '../formStyle/Form.css';
-import img from '../formStyle/icons8-close.svg';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { login } from '../../redux/slices/authSlice';
 
-function SignInForm() {
-  const email = useRef();
-  const password = useRef();
-  const [sendRequest, setSendRequest] = useState(false);
-  const [error, setError] = useState();
-  const [isLoading, setIsLoading] = useState(false);
+export default function SignInForm() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-  const { setSessionId } = useContext(Context);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-
-      const response = await logIn(email.current.value, password.current.value);
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(Object.values(data));
-        setSendRequest(false);
-        setIsLoading(false);
-        return;
-      }
-
-      setSessionId(Cookies.get('sessionid'));
-
-      navigate('/my-storage/');
-
-      setSendRequest(false);
-      setIsLoading(false);
-    };
-
-    if (sendRequest) {
-      fetchData();
-    }
-  }, [sendRequest]);
-
-  const onSubmitHandler = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSendRequest(true);
+    setError('');
+
+    const result = await dispatch(login({ email, password }));
+
+    if (result.type === 'auth/login/fulfilled') {
+      navigate('/');
+    } else {
+      setError(result.payload || 'Login failed');
+    }
   };
 
   return (
-    <>
-      <form className="form" onSubmit={onSubmitHandler}>
-        <h2 className="form--title">Sign In</h2>
-        <input type="email" ref={email} placeholder="email" required />
-        <input type="password" ref={password} placeholder="password" required />
-        <input type="submit" value="OK" required />
-        <span>{error}</span>
-        <button className="close" type="button" aria-label="Close"><Link to="/"><img src={img} alt="close" /></Link></button>
-      </form>
-      { isLoading ? <Preloader /> : null }
-    </>
+    <form onSubmit={handleSubmit} className="auth-form">
+      <h2>Sign In</h2>
+
+      {error && <div className="error-alert">{error}</div>}
+
+      <div className="form-group">
+        <label htmlFor="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+      </div>
+
+      <button type="submit">Sign In</button>
+
+      <p className="form-footer">
+        Don't have an account? <a href="/signup">Sign Up</a>
+      </p>
+    </form>
   );
 }
-
-export default SignInForm;

@@ -1,69 +1,36 @@
-import React, { useContext, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { patchFile } from '../../../api/requests';
-import state from '../../../GlobalState/state';
-import '../../formStyle/Form.css';
-import img from '../../formStyle/icons8-close.svg';
+import { useSelector, useDispatch } from 'react-redux';
+import { updateFile } from '../../../redux/slices/filesSlice';
 
-function ChangeCommentForm({ currentFile, setForm, setFiles }) {
-  const newComment = useRef();
-  const { currentStorageUser } = useContext(state);
+export default function ChangeCommentForm({ fileId, currentComment }) {
+  const dispatch = useDispatch();
+  const { currentStorageUser } = useSelector((state) => state.auth);
+  const [comment, setComment] = useState(currentComment || '');
 
-  useEffect(() => {
-    newComment.current.value = currentFile.comment;
-  }, []);
-
-  const onSubmitHandler = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const patchData = currentFile;
-    patchData.comment = newComment.current.value;
-
-    let response;
-
-    if (currentStorageUser) {
-      response = await patchFile(patchData, currentStorageUser);
-    } else {
-      response = await patchFile(patchData);
-    }
-
-    const data = await response.json();
-
-    if (response.ok) {
-      setFiles(data);
-      setForm();
-    }
-  };
-
-  const onCloseHandler = () => {
-    setForm();
+    await dispatch(updateFile({
+      fileData: { id: fileId, comment },
+      userStorageId: currentStorageUser
+    }));
   };
 
   return (
-    <form className="form" onSubmit={onSubmitHandler}>
-      <h2 className="form-title">Change comment</h2>
-      <textarea type="text" placeholder="New comment" ref={newComment} />
-      <input type="submit" value="OK" required />
-      <button
-        className="close"
-        onClick={onCloseHandler}
-        onKeyDown={onCloseHandler}
-        type="button"
-        aria-label="Close"
-      >
-        <img
-          src={img}
-          alt="Close"
-        />
-      </button>
+    <form onSubmit={handleSubmit}>
+      <input
+        type="text"
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        placeholder="Enter comment"
+      />
+      <button type="submit">Update Comment</button>
     </form>
   );
 }
 
 ChangeCommentForm.propTypes = {
-  currentFile: PropTypes.instanceOf(Object).isRequired,
-  setForm: PropTypes.func.isRequired,
-  setFiles: PropTypes.func.isRequired,
+  fileId: PropTypes.number.isRequired,
+  currentComment: PropTypes.string,
 };
-
-export default ChangeCommentForm;

@@ -167,3 +167,35 @@ export function getDownloadLink(id) {
     },
   });
 }
+
+export const toggleAdminStatus = async (userId) => {
+  return fetch(`${BASE_URL}/users/${userId}/toggle-admin/`, {
+    method: 'PATCH',
+    headers: {
+      'X-CSRFToken': Cookies.get('csrftoken'),
+    },
+    credentials: 'include',
+  });
+};
+
+export function getDetailUserList() {
+  return fetch(`${BASE_URL}detail_users_list/`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': Cookies.get('csrftoken'),
+    },
+    credentials: 'include',
+  });
+}
+
+export function registration(email, username, password, passwordConfirm, firstName, lastName) {
+  return signUp({
+    email,
+    username,
+    password,
+    password_confirm: passwordConfirm,
+    first_name: firstName,
+    last_name: lastName,
+  });
+}

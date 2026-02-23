@@ -12,6 +12,14 @@ import FileStorage from './components/FileStorage/FileStorage';
 import Page404 from './components/Page404/Page404';
 
 function App() {
+
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(initializeCsrf());
+
+    dispatch(fetchUserData());
+  }, [dispatch]);
   return (
     <Router>
       <Header />

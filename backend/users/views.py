@@ -118,3 +118,32 @@ def me_view(request):
         "username": data.username,
         "isAdmin": data.is_staff,
     })
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAdminUser])
+def toggle_admin_status(request, user_id):
+    """
+    Изменение статуса администратора для пользователя.
+    """
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return JsonResponse({
+            'error': 'User not found'
+        }, status=404)
+
+    # Нельзя изменить статус самого себя
+    if user.id == request.user.id:
+        return JsonResponse({
+            'error': 'You cannot change your own admin status'
+        }, status=400)
+
+    # Переключаем статус
+    user.is_staff = not user.is_staff
+    user.save()
+
+    return JsonResponse({
+        'message': f'Admin status changed for {user.username}',
+        'is_staff': user.is_staff
+    })

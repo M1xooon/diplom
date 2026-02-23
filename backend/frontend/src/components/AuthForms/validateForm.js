@@ -1,17 +1,31 @@
 const validateUsername = (username) => {
-  const usernamePattern = /^[a-zA-Z][a-zA-Z0-9]/g;
+  if (!username) {
+    return {
+      ok: false,
+      message: 'Username is required',
+    };
+  }
 
+  if (username.length < 3) {
+    return {
+      ok: false,
+      message: 'Username must be at least 3 characters long',
+    };
+  }
+
+  if (username.length > 30) {
+    return {
+      ok: false,
+      message: 'Username must not exceed 30 characters',
+    };
+  }
+
+  // Должен начинаться с буквы и содержать только буквы, цифры, дефис, подчеркивание
+  const usernamePattern = /^[a-zA-Z][a-zA-Z0-9_-]*$/;
   if (!usernamePattern.test(username)) {
     return {
       ok: false,
-      message: 'Username can include only latin characters and numbers',
-    };
-  }
-
-  if (username.length < 4 || username.length > 20) {
-    return {
-      ok: false,
-      message: 'Username must be between 4 and 20 characters long',
+      message: 'Username must start with a letter and contain only letters, numbers, hyphens, and underscores',
     };
   }
 
@@ -20,35 +34,78 @@ const validateUsername = (username) => {
   };
 };
 
+/**
+ * Валидация email
+ */
+const validateEmail = (email) => {
+  if (!email) {
+    return {
+      ok: false,
+      message: 'Email is required',
+    };
+  }
+
+  // Базовая проверка формата email
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailPattern.test(email)) {
+    return {
+      ok: false,
+      message: 'Please enter a valid email address',
+    };
+  }
+
+  return {
+    ok: true,
+  };
+};
+
+/**
+ * Валидация пароля
+ */
 const validatePassword = (password) => {
-  const numberPattern = /\d/;
-  const specialLettersPattern = /[ `!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~]/;
-
-  if (password.length < 6) {
+  if (!password) {
     return {
       ok: false,
-      message: 'Password length should be 6 symbols or more',
+      message: 'Password is required',
     };
   }
 
-  if (password === password.toLowerCase()) {
+  if (password.length < 8) {
     return {
       ok: false,
-      message: 'Password should contains uppercase letter',
+      message: 'Password must be at least 8 characters long',
     };
   }
 
-  if (!numberPattern.test(password)) {
+  // Проверка на заглавную букву
+  if (!/[A-Z]/.test(password)) {
     return {
       ok: false,
-      message: 'Password should contains number',
+      message: 'Password must contain at least one uppercase letter',
     };
   }
 
-  if (!specialLettersPattern.test(password)) {
+  // Проверка на строчную букву
+  if (!/[a-z]/.test(password)) {
     return {
       ok: false,
-      message: 'Password should contains special character',
+      message: 'Password must contain at least one lowercase letter',
+    };
+  }
+
+  // Проверка на цифру
+  if (!/\d/.test(password)) {
+    return {
+      ok: false,
+      message: 'Password must contain at least one digit',
+    };
+  }
+
+  // Проверка на специальный символ
+  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+    return {
+      ok: false,
+      message: 'Password must contain at least one special character',
     };
   }
 
@@ -57,4 +114,61 @@ const validatePassword = (password) => {
   };
 };
 
-export { validateUsername, validatePassword };
+/**
+ * Валидация подтверждения пароля
+ */
+const validatePasswordConfirm = (password, passwordConfirm) => {
+  if (!passwordConfirm) {
+    return {
+      ok: false,
+      message: 'Please confirm your password',
+    };
+  }
+
+  if (password !== passwordConfirm) {
+    return {
+      ok: false,
+      message: 'Passwords do not match',
+    };
+  }
+
+  return {
+    ok: true,
+  };
+};
+
+/**
+ * Получить требования к паролю для отображения
+ */
+const getPasswordRequirements = (password) => {
+  return [
+    {
+      text: 'At least 8 characters',
+      met: password.length >= 8,
+    },
+    {
+      text: 'One uppercase letter (A-Z)',
+      met: /[A-Z]/.test(password),
+    },
+    {
+      text: 'One lowercase letter (a-z)',
+      met: /[a-z]/.test(password),
+    },
+    {
+      text: 'One digit (0-9)',
+      met: /\d/.test(password),
+    },
+    {
+      text: 'One special character (!@#$%^&*)',
+      met: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+    },
+  ];
+};
+
+export {
+  validateUsername,
+  validateEmail,
+  validatePassword,
+  validatePasswordConfirm,
+  getPasswordRequirements,
+};

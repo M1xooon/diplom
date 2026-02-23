@@ -1,62 +1,24 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchFiles } from '../../redux/slices/filesSlice';
 import FileInput from './FileEditPanel/FileInput';
 import FileList from './FileList/FileList';
 import FileEditPanel from './FileEditPanel/FileEditPanel';
-import { postFile, getFiles, getUserFiles } from '../../api/requests';
-import state from '../../GlobalState/state';
 
-function FileStorage() {
-  const [currentFile, setCurrentFile] = useState();
-  const [files, setFiles] = useState([]);
-  const { currentStorageUser: currentStorageUserId } = useContext(state);
+export default function FileStorage() {
+  const dispatch = useDispatch();
+  const { currentStorageUser } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    const fetchData = async () => {
-      let response;
-
-      if (currentStorageUserId) {
-        response = await getUserFiles(currentStorageUserId);
-      } else {
-        response = await getFiles();
-      }
-
-      const data = await response.json();
-
-      setFiles(data);
-    };
-
-    fetchData();
-  }, []);
-
-  const sendFile = async (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('comment', '');
-    const response = await postFile(formData);
-    const data = await response.json();
-
-    setFiles(data);
-  };
+    dispatch(fetchFiles(currentStorageUser));
+  }, [dispatch, currentStorageUser]);
 
   return (
-    <>
-      <FileList
-        fileList={files}
-        setCurrentFile={setCurrentFile}
-        currentFile={currentFile}
-      />
-      <FileInput sendFile={sendFile} />
-      { currentFile
-        ? (
-          <FileEditPanel
-            currentFile={currentFile}
-            setFiles={setFiles}
-            setCurrentFile={setCurrentFile}
-          />
-        )
-        : null }
-    </>
+    <div className="file-storage">
+      <h2>File Storage</h2>
+      <FileInput />
+      <FileList />
+      <FileEditPanel />
+    </div>
   );
 }
-
-export default FileStorage;
