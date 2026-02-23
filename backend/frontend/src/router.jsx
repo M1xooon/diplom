@@ -1,8 +1,8 @@
 /* eslint-disable linebreak-style */
-import React from 'react';
-import {
-  BrowserRouter as Router, Route, Routes,
-} from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import { Route, Routes } from 'react-router-dom';
+import { initializeCsrf, fetchUserData } from './redux/slices/authSlice';
 import StartPage from './components/StartPage/StartPage';
 import Header from './components/Header/Header';
 import SignUpForm from './components/AuthForms/SignUpForm';
@@ -12,16 +12,15 @@ import FileStorage from './components/FileStorage/FileStorage';
 import Page404 from './components/Page404/Page404';
 
 function App() {
-
   const dispatch = useDispatch();
 
   useEffect(() => {
     dispatch(initializeCsrf());
-
     dispatch(fetchUserData());
   }, [dispatch]);
+  
   return (
-    <Router>
+    <>
       <Header />
       <Routes>
         <Route path="/" element={<StartPage />} />
@@ -31,7 +30,7 @@ function App() {
         <Route path="/my-storage" element={<FileStorage />} />
         <Route path="*" element={<Page404 />} />
       </Routes>
-    </Router>
+    </>
   );
 }
 

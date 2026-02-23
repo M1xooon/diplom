@@ -43,7 +43,18 @@ export const fetchUserData = createAsyncThunk(
   'auth/fetchUserData',
   async (_, { rejectWithValue }) => {
     try {
+      // Проверяем есть ли sessionId
+      if (!Cookies.get('sessionid')) {
+        return rejectWithValue('No session');
+      }
+      
       const response = await userMe();
+      
+      // Если ответ не успешный, значит пользователь не авторизован
+      if (!response.ok) {
+        return rejectWithValue('Not authenticated');
+      }
+      
       const data = await response.json();
 
       return {

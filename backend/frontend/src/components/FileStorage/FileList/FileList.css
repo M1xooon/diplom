@@ -1,8 +1,46 @@
-.file-list-title {
-  margin: 50px 15%;
+.file-list {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
 }
 
-.file-list-container {
+.loading-container {
   display: flex;
-  margin: 50px 15%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  color: #64748b;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.no-files {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #64748b;
+}
+
+.no-files p:first-child {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.no-files-hint {
+  font-size: 1rem;
+  color: #94a3b8;
 }

@@ -1,58 +1,116 @@
 .start-page {
   display: flex;
-  justify-content: space-between;
-  width: 70%;
-  margin: 70px auto;
-  font-family: 'Source Sans Pro', sans-serif;
-}
-
-.start-page--welcome {
-  width: 40%;
-}
-
-.start-page--welcome--title {
-  font-weight: 900;
-  font-size: 3em;
-  color: #1b263b
-}
-
-.start-page--image {
-  width: 40%;
-}
-
-.start-page--welcome--subtitle {
-  font-size: 2em;
-  font-weight: 600;
-  color: #1b263b
-}
-
-.start-page--welcome--content {
-  font-size: 1.5em;
-  font-weight: 400;
-  margin-bottom: 50px;
-  color: #1b263b
-}
-
-.sing-up-button {
-  display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  width: 160px;
-  height: 55px;
-  background-color: #415a77;
+  justify-content: center;
+  min-height: 70vh;
+  padding: 2rem;
+  text-align: center;
+}
+
+.start-page .logo {
+  width: 200px;
+  height: 200px;
+  margin-bottom: 2rem;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+.start-page h1 {
+  font-size: 3rem;
+  color: #1e293b;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.subtitle {
+  font-size: 1.25rem;
+  color: #64748b;
+  margin-bottom: 3rem;
+}
+
+.start-actions {
+  display: flex;
+  gap: 1rem;
+  flex-direction: column;
+  align-items: center;
+}
+
+.welcome-text {
+  font-size: 1.5rem;
+  color: #334155;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 1rem 3rem;
+  font-size: 1.1rem;
   font-weight: 600;
-  font-size: 1.4em;
-  color: #ffffff;
-  cursor: pointer;
-  border: none;
-  border-radius: 10px;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  transition: all 0.3s;
+  min-width: 200px;
+  display: inline-block;
 }
 
-.sing-up-button:hover {
-  background-color: #415a77;
-  transition: all 500ms;
+.btn-primary {
+  background-color: #3b82f6;
+  color: white;
+  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
 }
 
-.start-page--image {
-  cursor: default;
+.btn-primary:hover {
+  background-color: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(59, 130, 246, 0.4);
+}
+
+.btn-secondary {
+  background-color: white;
+  color: #3b82f6;
+  border: 2px solid #3b82f6;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-secondary:hover {
+  background-color: #eff6ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+@media (max-width: 768px) {
+  .start-page h1 {
+    font-size: 2rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+  }
+
+  .start-page .logo {
+    width: 150px;
+    height: 150px;
+  }
+
+  .start-actions {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    padding: 0.875rem 2rem;
+    font-size: 1rem;
+  }
 }

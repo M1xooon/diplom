@@ -52,13 +52,6 @@ function FileEditPanel({ currentFile, setCurrentFile, setFiles }) {
 
   return (
     <>
-      <div className="file-edit-panel">
-        <div className="file-edit-panel--item" onClick={() => onClickHandler('rename')} onKeyDown={() => onClickHandler('rename')} role="button" tabIndex={0}>Rename</div>
-        <div className="file-edit-panel--item" onClick={() => onClickHandler('changeComment')} onKeyDown={() => onClickHandler('changeComment')} role="button" tabIndex={0}>Change comment</div>
-        <div className="file-edit-panel--item" onClick={() => onClickHandler('download')} onKeyDown={() => onClickHandler('download')} role="button" tabIndex={0}>Download</div>
-        <div className="file-edit-panel--item" onClick={() => onClickHandler('getLink')} onKeyDown={() => onClickHandler('getLink')} role="button" tabIndex={0}>Get download link</div>
-        <div className="file-edit-panel--item" onClick={() => onClickHandler('delete')} onKeyDown={() => onClickHandler('delete')} role="button" tabIndex={0}>Delete</div>
-      </div>
       { patchForm === 'rename'
         ? (
           <FileRenameForm
