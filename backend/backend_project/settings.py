@@ -4,7 +4,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-l(e)-&+iu@)1mqiw$#_340amtr8e4by#77t7_laf(*15$_+oe^'
-DEBUG = True
+DEBUG = False
 ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
@@ -109,7 +109,11 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [
+    f"http://130.49.150.30",
+    f"https://130.49.150.30",
+]
 
 CORS_ALLOW_HEADERS = [
     'content-type',
@@ -125,6 +129,10 @@ CORS_ALLOW_METHODS = [
     'PATCH',
 ]
 
-CSRF_TRUSTED_ORIGINS = ['http://localhost:8000', 'http://127.0.0.1:8000']
+CSRF_TRUSTED_ORIGINS = [
+    f"http://130.49.150.30",
+    f"https://130.49.150.30",
+]
+
 
 SESSION_COOKIE_HTTPONLY = False
